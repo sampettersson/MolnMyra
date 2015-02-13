@@ -48,7 +48,7 @@ molnmyra.model = class model
 
   constructor: (name, schema) ->
 
-      if global.MolnMyra.conn is undefined
+      if MolnMyra.conn is undefined
           throw "MolnMyra: Missing connection"
 
       current = self()
@@ -95,7 +95,7 @@ molnmyra.model = class model
           index:
               fields: this.construct.schema.query.fields
 
-      global.MolnMyra.conn.db.index this.index.obj, (err, response) ->
+      MolnMyra.conn.db.index this.index.obj, (err, response) ->
 
           throw err if err
           current.index.indexed = true
