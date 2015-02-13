@@ -41,8 +41,8 @@ molnmyra.model = class model
   self = () ->
 
       obj =
+        saveConstructor: model.saveConstructor
         cloudantIndex: model.cloudantIndex
-        save: model.save
 
       return obj
 
@@ -58,11 +58,29 @@ molnmyra.model = class model
           schema: schema
 
       current.cloudantIndex()
-      return current
 
-  @cloudantIndex = (callback = null) ->
+      return current.saveConstructor(current)
+
+  @saveConstructor = (current) ->
+
+    return (doc = {}) ->
+
+        Object.defineProperty(doc, "save",
+          {enumerable: false, value: model.save(current, model.save)})
+
+        if doc.id is undefined
+
+            uuid = require 'node-uuid'
+
+            doc.id = uuid.v1()
+
+        return doc
+
+  @cloudantIndex = (callback) ->
 
       current = this
+
+      currentCallback = callback
 
       this.index = {}
       this.index.indexed = false
@@ -77,23 +95,32 @@ molnmyra.model = class model
           throw err if err
           current.index.indexed = true
 
-          if callback isnt null
-              callback(response)
+          if currentCallback
+            currentCallback(response)
 
-      return
+  @save = (current) ->
 
-  @save = (callback) ->
+      return (callback) ->
 
-      current = this
+          currentCallback = callback
 
-      if this.index.indexed is false
+          context = this
 
-        this.cloudantIndex () ->
-            current.save callback
+          if current.index.indexed is false
 
-        return
+            current.cloudantIndex (response) ->
+                saveModel = model.saveConstructor(current)
+                save = new saveModel()
+                save.save currentCallback
 
-      callback()
+          else
+
+            id = this.id.toString()
+
+            delete this.id
+
+            MolnMyra.conn.db.insert this, id, (err, result) ->
+                currentCallback err, result
 
 
 

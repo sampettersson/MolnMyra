@@ -22,7 +22,8 @@
   },
   "homepage": "https://github.com/sampettersson/MolnMyra",
   "dependencies": {
-    "cloudant": "^1.0.0-beta3"
+    "cloudant": "^1.0.0-beta3",
+    "node-uuid": "^1.4.2"
   },
   "devDependencies": {
     "grunt": "^0.4.5",

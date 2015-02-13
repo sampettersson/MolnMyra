@@ -1,8 +1,10 @@
-var cred, fiskModel, fiskSchema, molnmyra, ostronModel, ostronSchema;
+var cred, fisk, fiskModel, fiskSchema, molnmyra, ostronModel, ostronSchema;
 
 molnmyra = require('../lib');
 
 cred = require('../cred');
+
+process.stdin.resume();
 
 molnmyra.connect(cred.uri, cred.db);
 
@@ -30,6 +32,10 @@ ostronModel = molnmyra.model("ostron", ostronSchema);
 
 console.log("ostronModel: " + ostronModel);
 
-fiskModel.save(function() {
-  return console.log("received callback");
+fisk = new fiskModel();
+
+fisk.key = "value";
+
+fisk.save(function(err, result) {
+  return console.log(err, result);
 });

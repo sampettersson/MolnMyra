@@ -3,6 +3,8 @@ molnmyra = require '../lib'
 # Make a file containing your database credentials
 cred = require '../cred'
 
+process.stdin.resume()
+
 molnmyra.connect cred.uri, cred.db
 
 fiskSchema = molnmyra.Schema
@@ -25,5 +27,8 @@ ostronModel = molnmyra.model "ostron", ostronSchema
 
 console.log "ostronModel: " + ostronModel
 
-fiskModel.save () ->
-  console.log "received callback"
+fisk = new fiskModel()
+fisk.key = "value"
+
+fisk.save (err, result) ->
+  console.log err, result
