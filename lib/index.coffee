@@ -68,6 +68,11 @@ molnmyra.model = class model
         Object.defineProperty(doc, "save",
           {enumerable: false, value: model.save(current, model.save)})
 
+        current.construct.schema.query.fields.forEach (key) ->
+            Object.defineProperty doc, key,
+                get: () -> doc['__' + key]
+                set: (value) -> doc['__' + key] = value
+
         if doc.id is undefined
 
             uuid = require 'node-uuid'
@@ -104,29 +109,32 @@ molnmyra.model = class model
 
           currentCallback = callback
 
+          console.log "this", this
+
           context = this
+
+          insert = () ->
+
+              insert = {}
+
+              id = context.id.toString()
+
+              delete context.id
+
+              keys = Object.keys context
+
+              keys.forEach (key) ->
+                  insert[key.substr(2)] = context[key]
+
+              MolnMyra.conn.db.insert insert, id, (err, result) ->
+                  currentCallback err, result
 
           if current.index.indexed is false
 
             current.cloudantIndex (response) ->
-                saveModel = model.saveConstructor(current)
-                save = new saveModel()
-                save.save currentCallback
+                
+                insert()
 
           else
 
-            id = this.id.toString()
-
-            delete this.id
-
-            MolnMyra.conn.db.insert this, id, (err, result) ->
-                currentCallback err, result
-
-
-
-
-
-
-
-
-
+            insert()

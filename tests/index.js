@@ -34,7 +34,9 @@ console.log("ostronModel: " + ostronModel);
 
 fisk = new fiskModel();
 
-fisk.key = "value";
+fisk.fisk = "hello";
+
+console.log(fisk);
 
 fisk.save(function(err, result) {
   return console.log(err, result);

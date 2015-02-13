@@ -28,7 +28,9 @@ ostronModel = molnmyra.model "ostron", ostronSchema
 console.log "ostronModel: " + ostronModel
 
 fisk = new fiskModel()
-fisk.key = "value"
+fisk.fisk = "hello"
+
+console.log fisk
 
 fisk.save (err, result) ->
   console.log err, result
