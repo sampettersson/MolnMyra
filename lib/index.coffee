@@ -109,8 +109,6 @@ molnmyra.model = class model
 
           currentCallback = callback
 
-          console.log "this", this
-
           context = this
 
           insert = () ->
@@ -132,7 +130,7 @@ molnmyra.model = class model
           if current.index.indexed is false
 
             current.cloudantIndex (response) ->
-                
+
                 insert()
 
           else
