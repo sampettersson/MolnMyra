@@ -9,12 +9,10 @@ process.stdin.resume();
 molnmyra.connect(cred.uri, cred.db);
 
 fiskSchema = molnmyra.Schema({
-  fisk: {
+  hello: {
     unique: true
   }
 });
-
-console.log("fiskSchema: " + fiskSchema);
 
 ostronSchema = molnmyra.Schema({
   ostron: {
@@ -22,21 +20,25 @@ ostronSchema = molnmyra.Schema({
   }
 });
 
-console.log("ostronSchema: " + ostronSchema);
-
 fiskModel = molnmyra.model("fisk", fiskSchema);
-
-console.log("fiskModel: " + fiskModel);
 
 ostronModel = molnmyra.model("ostron", ostronSchema);
 
-console.log("ostronModel: " + ostronModel);
-
 fisk = new fiskModel();
 
-fisk.fisk = "hello";
+fisk.hello = "hello";
 
-console.log(fisk);
+fisk.find({
+  hello: "hello"
+}, function(err, result) {
+  return console.log(err, result);
+});
+
+fisk.findOne({
+  hello: "hello"
+}, function(err, result) {
+  return console.log(err, result);
+});
 
 fisk.save(function(err, result) {
   return console.log(err, result);

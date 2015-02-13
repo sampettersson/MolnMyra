@@ -8,29 +8,25 @@ process.stdin.resume()
 molnmyra.connect cred.uri, cred.db
 
 fiskSchema = molnmyra.Schema
-  fisk:
+  hello:
     unique: true
-
-console.log "fiskSchema: " + fiskSchema
 
 ostronSchema = molnmyra.Schema
   ostron:
     unique: true
 
-console.log "ostronSchema: " + ostronSchema
-
 fiskModel = molnmyra.model "fisk", fiskSchema
-
-console.log "fiskModel: " + fiskModel
 
 ostronModel = molnmyra.model "ostron", ostronSchema
 
-console.log "ostronModel: " + ostronModel
-
 fisk = new fiskModel()
-fisk.fisk = "hello"
+fisk.hello = "hello"
 
-console.log fisk
+fisk.find { hello: "hello" }, (err, result) ->
+  console.log err, result
+
+fisk.findOne { hello: "hello" }, (err, result) ->
+  console.log err, result
 
 fisk.save (err, result) ->
   console.log err, result

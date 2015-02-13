@@ -20,7 +20,7 @@ molnmyra.connect = class connect
         connection.db = connection.cloudant.use(name)
 
         global.MolnMyra = {}
-        global.MolnMyra.conn = connection
+        MolnMyra.conn = connection
 
         return
 
@@ -41,7 +41,7 @@ molnmyra.model = class model
   self = () ->
 
       obj =
-        saveConstructor: model.saveConstructor
+        modelConstructor: model.modelConstructor
         cloudantIndex: model.cloudantIndex
 
       return obj
@@ -59,14 +59,23 @@ molnmyra.model = class model
 
       current.cloudantIndex()
 
-      return current.saveConstructor(current)
+      return current.modelConstructor(current)
 
-  @saveConstructor = (current) ->
+  @modelConstructor = (current) ->
 
     return (doc = {}) ->
 
-        Object.defineProperty(doc, "save",
-          {enumerable: false, value: model.save(current, model.save)})
+        Object.defineProperty doc, "save",
+          enumerable: false
+          value: model.save current
+
+        Object.defineProperty doc, "find",
+          enumerable: false
+          value: model.find current
+
+        Object.defineProperty doc, "findOne",
+          enumerable: false
+          value: model.findOne current
 
         current.construct.schema.query.fields.forEach (key) ->
             Object.defineProperty doc, key,
@@ -89,19 +98,77 @@ molnmyra.model = class model
 
       this.index = {}
       this.index.indexed = false
-      this.index.obj =
-          name: this.construct.name
+
+      uniqueIndex = {}
+      uniqueIndex.obj =
+          name: "uniqueReservation"
           type: "json"
           index:
-              fields: this.construct.schema.query.fields
+              fields: ["type", "reference"]
 
-      MolnMyra.conn.db.index this.index.obj, (err, response) ->
+      doIndex = () ->
+
+          current.index.obj =
+              name: current.construct.name
+              type: "json"
+              index:
+                  fields: current.construct.schema.query.fields
+
+          MolnMyra.conn.db.index current.index.obj, (err, response) ->
+
+              console.log response
+
+              throw err if err
+              current.index.indexed = true
+
+              if currentCallback
+                currentCallback(response)
+
+      MolnMyra.conn.db.index uniqueIndex.obj, (err) ->
 
           throw err if err
-          current.index.indexed = true
 
-          if currentCallback
-            currentCallback(response)
+          doIndex()
+
+  @find = (current) ->
+
+      return (data, callback) ->
+
+          currentCallback = callback
+
+          find = () ->
+
+              args =
+                selector: data
+
+              MolnMyra.conn.db.find args, currentCallback
+
+          find()
+
+  @findOne = (current) ->
+
+      return (data, callback) ->
+
+          currentCallback = callback
+
+          find = () ->
+
+              args =
+                selector: data
+                limit: 1
+
+              MolnMyra.conn.db.find args, (err, results) ->
+
+                  doc = null
+
+                  console.log results
+
+                  if results isnt null
+                      doc = results.docs[0]
+
+                  currentCallback(err, doc)
+
+          find()
 
   @save = (current) ->
 
@@ -110,6 +177,18 @@ molnmyra.model = class model
           currentCallback = callback
 
           context = this
+
+          insertUniqueReserver = (key, ref) ->
+
+              name = current.construct.name.substr(0, 1).toUpperCase() + current.construct.name.substr(1)
+              id = current.construct.name + "/" + key
+
+              insert = {}
+              insert.type = name + "Reservation"
+              insert.reference = ref
+
+              MolnMyra.conn.db.insert insert, id, (err, result) ->
+                  console.log err, result
 
           insert = () ->
 
@@ -122,14 +201,22 @@ molnmyra.model = class model
               keys = Object.keys context
 
               keys.forEach (key) ->
-                  insert[key.substr(2)] = context[key]
+
+                  realKey = key.substr(2)
+                  insert[realKey] = context[key]
+
+                  properties = current.construct.schema.schema[realKey]
+
+                  if properties.unique is true
+
+                    insertUniqueReserver realKey, id
 
               MolnMyra.conn.db.insert insert, id, (err, result) ->
                   currentCallback err, result
 
           if current.index.indexed is false
 
-            current.cloudantIndex (response) ->
+            current.cloudantIndex () ->
 
                 insert()
 
